@@ -3,6 +3,7 @@ package com.john.moviecatalogservice.resources;
 import com.john.moviecatalogservice.models.CatalogItem;
 import com.john.moviecatalogservice.models.Movie;
 import com.john.moviecatalogservice.models.Rating;
+import com.john.moviecatalogservice.models.UserRating;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,21 +29,23 @@ public class MovieCatalogResource {
     @RequestMapping("/{userId}")
     public List<CatalogItem> getCatalog(@PathVariable("userId") String userId) {
 
-        List<Rating> ratings = Arrays.asList(new Rating("1234", 4), new Rating("5678", 3));
+        UserRating ratings = restTemplate.getForObject("http://localhost:8083/ratingsdata/users/" + userId, UserRating.class);
 
-        return ratings.stream().map(rating -> {
-//            Movie movie = restTemplate.getForObject("http://localhost:8082/movies/" + rating.getMovieId(), Movie.class);
-
-            Movie movie = webClientBuilder.build()
-                    .get()
-                    .uri("http://localhost:8082/movies/" + rating.getMovieId())
-                    .retrieve()
-                    .bodyToMono(Movie.class)
-                    .block();
-
+        return ratings.getUserRating().stream().map(rating -> {
+            Movie movie = restTemplate.getForObject("http://localhost:8082/movies/" + rating.getMovieId(), Movie.class);
             return new CatalogItem(movie.getName(), "Test", rating.getRating());
         }).collect(Collectors.toList());
 
 
     }
 }
+
+
+/*
+            Movie movie = webClientBuilder.build()
+                    .get()
+                    .uri("http://localhost:8082/movies/" + rating.getMovieId())
+                    .retrieve()
+                    .bodyToMono(Movie.class)
+                    .block();
+* */
